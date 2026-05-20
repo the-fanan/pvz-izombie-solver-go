@@ -1,8 +1,6 @@
 package simulator
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 )
 
@@ -78,17 +76,12 @@ type GetNextPositionFunc func(frame Frame, zombie *zombie, speed float64) (CellI
 
 func defaultNextPositionFunc(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int) {
 	currentCell, currentSubmatrixRow, currentSubMatrixCol, currentAltitude := zombie.getStartingPosition()
-	fmt.Println("starting positions", currentCell.String(), currentSubmatrixRow, currentSubMatrixCol, currentAltitude)
 	startingPoint := GetHorizontalDistanceFromCellColAndSubCellCol(currentCell.Position().Col, currentSubMatrixCol, zombie.resolution)
-	fmt.Println("starting point", startingPoint)
 
 	// we use minus because we are going from right to left
 	endPoint := startingPoint - int(speed * float64(zombie.movementFrame))
-	fmt.Println("end point", endPoint)
 	newCol, newSubmatrixCol := GetCellColAndSubCellColFromHorizontalDistance(endPoint, zombie.resolution)
-	fmt.Println("new col", newCol, "new submatrix col", newSubmatrixCol)
 	newCellID := GetCellID(currentCell.Position().Row, newCol)
-	fmt.Println("new cell id", newCellID.String())
 
 	return newCellID, currentSubmatrixRow, newSubmatrixCol, currentAltitude
 }
@@ -162,7 +155,6 @@ func (z *zombie) Move(frame Frame) {
 	}
 
 	relativeSpeed := speed / float64(z.resolution)
-	fmt.Println("relativeSpeed", relativeSpeed)
 	// we must increment frame before getting next position
 	z.movementFrame++
 	c, sr, sc, sa := z.getNextPosition(frame, relativeSpeed)
