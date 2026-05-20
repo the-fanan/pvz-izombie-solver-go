@@ -1,12 +1,55 @@
 package simulator
 
-type Frame struct {
+import (
+	"container/list"
+)
+
+type Frame interface {
+	GetCellResolution() int
+	CountZombies() int
+	SetCellPlant(plant Plant, row, col int)
+	RemoveCellPlant(plant Plant, row, col int)
+	SetCellZombie(zombie Zombie, row, col int)
+	RemoveCellZombie(zombie Zombie, row, col int)
+	CellHasPlant(cellID CellID) bool
+}
+
+func NewFrame(cellResolution, rowToSimulateOn, sun int) (Frame, error) {
+	NUM_ROWS := 5
+	NUM_COLS := 7
+	board := [][]Cell{}
+
+	for row := 0; row < NUM_ROWS; row++ {
+		board = append(board, []Cell{})
+		for col := 0; col < NUM_COLS; col++ {
+			cellID, err := GetCellID(row, col)
+			if err != nil {
+				return nil, err
+			}
+			board[row] = append(board[row], Cell{
+				CellID:            cellID,
+				Position: CellPosition{Row: row, Col: col},
+				Plants:            list.New(),
+				Zombies:           list.New(),
+			})
+		}
+	}
+	return &frame {
+		CellResolution: cellResolution,
+		RowToSimulateOn: rowToSimulateOn,
+		Board: board,
+		Sun: sun,
+	}, nil
+}
+
+type frame struct {
 	CellResolution int
-	RowToTrack                   int16
+	RowToSimulateOn                   int
 	Board                        [][]Cell
 	Iteration                    int64
 	LastZombieInsertionIteration int64
 	ZombieInsertions             []ZombieInsertion
+	Sun int
 }
 
 type ZombieInsertion struct {
@@ -14,13 +57,13 @@ type ZombieInsertion struct {
 	ZombieName ZombieName
 }
 
-func (f *Frame) CountZombies() int {
+func (f *frame) CountZombies() int {
 	zombieCount := 0
-	rows := int16(len(f.Board))
-	cols := int16(len(f.Board[0]))
+	rows := int(len(f.Board))
+	cols := int(len(f.Board[0]))
 
-	for row := int16(0); row < rows; row++ {
-		for col := int16(0); col < cols; col++ {
+	for row := int(0); row < rows; row++ {
+		for col := int(0); col < cols; col++ {
 			zombieCount += f.Board[row][col].Zombies.Len()
 		}
 	}
@@ -28,11 +71,11 @@ func (f *Frame) CountZombies() int {
 	return zombieCount
 }
 
-func (f *Frame) SetCellPlant(plant Plant, row, col int16) {
+func (f *frame) SetCellPlant(plant Plant, row, col int) {
 	f.Board[row][col].Plants.PushBack(plant)
 }
 
-func (f *Frame) RemoveCellPlant(plant Plant, row, col int16) {
+func (f *frame) RemoveCellPlant(plant Plant, row, col int) {
 	if f.Board[row][col].Plants.Len() == 0 {
 		return
 	}
@@ -49,7 +92,7 @@ func (f *Frame) RemoveCellPlant(plant Plant, row, col int16) {
 	}
 }
 
-func (f *Frame) SetCellZombie(zombie Zombie, row, col int16) {
+func (f *frame) SetCellZombie(zombie Zombie, row, col int) {
 	f.Board[row][col].Zombies.PushBack(zombie)
 	f.LastZombieInsertionIteration = f.Iteration
 	f.ZombieInsertions = append(f.ZombieInsertions, ZombieInsertion{
@@ -58,7 +101,7 @@ func (f *Frame) SetCellZombie(zombie Zombie, row, col int16) {
 	})
 }
 
-func (f *Frame) RemoveCellZombie(zombie Zombie, row, col int16) {
+func (f *frame) RemoveCellZombie(zombie Zombie, row, col int) {
 	if f.Board[row][col].Zombies.Len() == 0 {
 		return
 	}
@@ -73,4 +116,19 @@ func (f *Frame) RemoveCellZombie(zombie Zombie, row, col int16) {
 
 		element = element.Next()
 	}
+}
+
+func (f *frame) GetCellResolution() int {
+	return f.CellResolution
+}
+
+func (f *frame) CellHasPlant(cellID CellID) (bool) {
+	position := cellID.Position()
+	cell := f.Board[position.Row][position.Col]
+	plantElement := cell.Plants.Front()
+	if plantElement == nil {
+		return false
+	}
+
+	return true
 }

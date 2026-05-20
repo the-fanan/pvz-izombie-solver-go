@@ -6,9 +6,26 @@ type Zombie interface {
 Name() ZombieName
 	ID() uuid.UUID
 	Copy() Zombie
-	ExactCopy() Zombie
 	SunCost() int
-	SetResolution(resolution int)
+	GetCurrentPosition() (CellID, int, int, int)
+}
+
+func NewZombie(name ZombieName, resolution int, startingCell CellID, startingSubmatrixRow, startingSubmatrixCol, startingSubmatrixAltitude int) Zombie {
+	z := &zombie{
+		id:                    uuid.New(),
+		name:                  name,
+		resolution:            resolution,
+		cellID:                startingCell,
+		subMatrixRow:          startingSubmatrixRow,
+		subMatrixCol:          startingSubmatrixCol,
+		subMatrixAltitude:     startingSubmatrixAltitude,
+		startingCellID:        startingCell,
+		startingSubMatrixRow:  startingSubmatrixRow,
+		startingSubMatrixCol:  startingSubmatrixCol,
+		startingSubMatrixAltitude: startingSubmatrixAltitude,
+	}
+
+	return z
 }
 
 
@@ -42,10 +59,22 @@ func mapZombieToWalkingSpeed() [zombieCount]int{
 	}
 }
 
+type GetNextPosition func(frame Frame, zombie Zombie) (CellID, int, int, int)
+
 type zombie struct {
 	id                    uuid.UUID
 	name                  ZombieName
 	resolution int
+	cellID CellID
+	subMatrixRow int
+	subMatrixCol int
+	subMatrixAltitude int
+	startingCellID CellID
+	startingSubMatrixRow int
+	startingSubMatrixCol int
+	startingSubMatrixAltitude int
+	startingFrame int
+	movementFrame int // only increments when position is updated
 }
 
 func (z *zombie) Name() ZombieName {
@@ -56,30 +85,28 @@ func (z *zombie) ID() uuid.UUID {
 	return z.id
 }
 
-func (z *zombie) copy() *zombie {
+func (z *zombie) Copy() Zombie {
 	return &zombie{
-		id:                    uuid.New(),
+		id:                    z.id,
 		name:                  z.name,
 		resolution:            z.resolution,
+		cellID:                z.cellID,
+		subMatrixRow:          z.subMatrixRow,
+		subMatrixCol:          z.subMatrixCol,
+		subMatrixAltitude:     z.subMatrixAltitude,
+		startingCellID:        z.startingCellID,
+		startingSubMatrixRow:  z.startingSubMatrixRow,
+		startingSubMatrixCol:  z.startingSubMatrixCol,
+		startingSubMatrixAltitude: z.startingSubMatrixAltitude,
+		startingFrame:         z.startingFrame,
+		movementFrame:         z.movementFrame,
 	}
-}
-
-func (z *zombie) Copy() Zombie {
-	newZombie := z.copy()
-	newZombie.id = uuid.New()
-	return newZombie
-}
-
-func (z *zombie) ExactCopy() Zombie {
-	newZombie := z.copy()
-	newZombie.id = z.id
-	return newZombie
 }
 
 func (z *zombie) SunCost() int {
 	return z.name.SunCost()
 }
 
-func (z *zombie) SetResolution(resolution int) {
-	z.resolution = resolution
+func (z *zombie) GetCurrentPosition() (CellID, int, int, int) {
+	return z.cellID, z.subMatrixRow, z.subMatrixCol, z.subMatrixAltitude
 }

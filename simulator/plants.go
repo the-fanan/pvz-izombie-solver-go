@@ -7,8 +7,14 @@ import (
 type Plant interface {
 	ID() uuid.UUID
 	Copy() Plant
-	ExactCopy() Plant
 	Name() PlantName
+}
+
+func NewPlant(name PlantName) Plant {
+	return &plant{
+		id:                       uuid.New(),
+		name:                     name,
+	}
 }
 
 type PlantName int
@@ -30,23 +36,9 @@ func (p *plant) ID() uuid.UUID {
 	return p.id
 }
 
-// to be used when initializing a frame
 func (p *plant) Copy() Plant {
-	newPlant := p.copy()
-	newPlant.id = uuid.New()
-	return newPlant
-}
-
-// to be used for generating frame continuation
-func (p *plant) ExactCopy() Plant {
-	newPlant := p.copy()
-	newPlant.id = p.id
-	return newPlant
-}
-
-func (p *plant) copy() *plant {
 	return &plant{
-		id:                       uuid.New(),
+		id:                       p.id,
 		name:                     p.name,
 	}
 }
