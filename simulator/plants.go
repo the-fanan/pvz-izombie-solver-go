@@ -21,6 +21,8 @@ type PlantName int
 const (
 	PlantNameUnknown PlantName = iota
 	PlantNameBrain
+	PlantNameSpikeWeed
+	PlantNamePeaShooter
 )
 
 type plant struct {

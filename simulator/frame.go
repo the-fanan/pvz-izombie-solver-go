@@ -11,7 +11,7 @@ type Frame interface {
 	RemoveCellPlant(plant Plant, row, col int)
 	SetCellZombie(zombie Zombie, row, col int)
 	RemoveCellZombie(zombie Zombie, row, col int)
-	CellHasPlant(cellID CellID) bool
+	CellHasPlant(cellID CellID) (bool, Plant)
 }
 
 func NewFrame(rows, cols, cellResolution, rowToSimulateOn, sun int) Frame {
@@ -130,13 +130,15 @@ func (f *frame) GetCellResolution() int {
 	return f.CellResolution
 }
 
-func (f *frame) CellHasPlant(cellID CellID) (bool) {
+func (f *frame) CellHasPlant(cellID CellID) (bool, Plant) {
 	position := cellID.Position()
 	cell := f.Board[position.Row][position.Col]
 	plantElement := cell.Plants.Front()
 	if plantElement == nil {
-		return false
+		return false, nil
 	}
 
-	return true
+	plant := plantElement.Value.(Plant)
+
+	return true, plant
 }
