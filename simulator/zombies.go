@@ -1,6 +1,10 @@
 package simulator
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 type Zombie interface {
 Name() ZombieName
@@ -8,6 +12,7 @@ Name() ZombieName
 	Copy() Zombie
 	SunCost() int
 	GetCurrentPosition() (CellID, int, int, int)
+	Move(frame Frame)
 }
 
 func NewZombie(name ZombieName, resolution int, startingCell CellID, startingSubmatrixRow, startingSubmatrixCol, startingSubmatrixAltitude int) Zombie {
@@ -33,6 +38,8 @@ type ZombieName int
 const (
 	ZombieUnknown ZombieName = iota
 	ZombieImp
+	ZombieConeHead
+	ZombieBucketHead
 
 	zombieCount
 )
@@ -45,21 +52,57 @@ func (zn ZombieName) WalkingSpeed() int {
 	return mapZombieToWalkingSpeed()[zn]
 }
 
+func (zn ZombieName) GetNextPositionFunc() GetNextPositionFunc {
+	return mapZombieToGetNextPositionFunc()[zn]
+}
+
 func mapZombieToSunCost() [zombieCount]int{
 	return [...]int{
 		ZombieUnknown: -1,
 		ZombieImp: 50,
+		ZombieConeHead: 75,
+		ZombieBucketHead: 125,
 	}
 }
 
 func mapZombieToWalkingSpeed() [zombieCount]int{
 	return [...]int{
 		ZombieUnknown: -1,
-		ZombieImp: 1,
+		ZombieImp: 3,
+		ZombieConeHead: 3,
+		ZombieBucketHead: 3,
 	}
 }
 
-type GetNextPosition func(frame Frame, zombie Zombie) (CellID, int, int, int)
+type GetNextPositionFunc func(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int)
+
+func defaultNextPositionFunc(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int) {
+	currentCell, currentSubmatrixRow, currentSubMatrixCol, currentAltitude := zombie.getStartingPosition()
+	fmt.Println("starting positions", currentCell.String(), currentSubmatrixRow, currentSubMatrixCol, currentAltitude)
+	startingPoint := GetHorizontalDistanceFromCellColAndSubCellCol(currentCell.Position().Col, currentSubMatrixCol, zombie.resolution)
+	fmt.Println("starting point", startingPoint)
+
+	// we use minus because we are going from right to left
+	endPoint := startingPoint - int(speed * float64(zombie.movementFrame))
+	fmt.Println("end point", endPoint)
+	newCol, newSubmatrixCol := GetCellColAndSubCellColFromHorizontalDistance(endPoint, zombie.resolution)
+	fmt.Println("new col", newCol, "new submatrix col", newSubmatrixCol)
+	newCellID := GetCellID(currentCell.Position().Row, newCol)
+	fmt.Println("new cell id", newCellID.String())
+
+	return newCellID, currentSubmatrixRow, newSubmatrixCol, currentAltitude
+}
+
+func mapZombieToGetNextPositionFunc() [zombieCount]GetNextPositionFunc {
+	return [...]GetNextPositionFunc{
+		ZombieUnknown: func(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int){
+			return CellOutOfBounds, -1, -1, -1
+		},
+		ZombieImp: defaultNextPositionFunc,
+		ZombieConeHead: defaultNextPositionFunc,
+		ZombieBucketHead: defaultNextPositionFunc,
+	}
+}
 
 type zombie struct {
 	id                    uuid.UUID
@@ -73,8 +116,8 @@ type zombie struct {
 	startingSubMatrixRow int
 	startingSubMatrixCol int
 	startingSubMatrixAltitude int
-	startingFrame int
-	movementFrame int // only increments when position is updated
+	movementFrame int
+	isFrozen bool
 }
 
 func (z *zombie) Name() ZombieName {
@@ -98,7 +141,6 @@ func (z *zombie) Copy() Zombie {
 		startingSubMatrixRow:  z.startingSubMatrixRow,
 		startingSubMatrixCol:  z.startingSubMatrixCol,
 		startingSubMatrixAltitude: z.startingSubMatrixAltitude,
-		startingFrame:         z.startingFrame,
 		movementFrame:         z.movementFrame,
 	}
 }
@@ -109,4 +151,34 @@ func (z *zombie) SunCost() int {
 
 func (z *zombie) GetCurrentPosition() (CellID, int, int, int) {
 	return z.cellID, z.subMatrixRow, z.subMatrixCol, z.subMatrixAltitude
+}
+
+func (z *zombie) Move(frame Frame) {
+	// it's important that zombie wide modifications to speed are handled here
+	// it reduces number of places to make updates if new modification requirements come up
+	speed := float64(z.name.WalkingSpeed())
+	if z.isFrozen {
+		speed = speed / 2
+	}
+
+	relativeSpeed := speed / float64(z.resolution)
+	fmt.Println("relativeSpeed", relativeSpeed)
+	// we must increment frame before getting next position
+	z.movementFrame++
+	c, sr, sc, sa := z.getNextPosition(frame, relativeSpeed)
+	z.cellID = c
+	z.subMatrixRow = sr
+	z.subMatrixCol = sc
+	z.subMatrixAltitude = sa
+
+}
+
+func (z *zombie) getStartingPosition() (CellID, int, int, int) {
+	return z.startingCellID, z.startingSubMatrixRow, z.startingSubMatrixCol, z.startingSubMatrixAltitude
+}
+
+func (z *zombie) getNextPosition(frame Frame, speed float64) (CellID, int, int, int) {
+	npf := z.name.GetNextPositionFunc()
+
+	return npf(frame, z, speed)
 }

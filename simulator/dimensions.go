@@ -43,3 +43,22 @@ func ProjectileVerticalDisplacement(resolution, frame int, velocity, angle float
 func ProjectileHorizontalDisplacement(frame int, velocity, angle float64) float64 {
 	return velocity * float64(frame) * math.Cos(angle)
 }
+
+// positions hold just co-ordinate values but we need to convert them to actual linear
+// distances relative to start of board to perform calculations
+// we don't bother about row since once and object is in motion that is not expected to change
+// except for starfish attacks which will be dealt with later
+func GetHorizontalDistanceFromCellColAndSubCellCol(cellCol, subCellCol, resolution int) int {
+	return (cellCol * resolution) + subCellCol
+}
+
+func GetCellColAndSubCellColFromHorizontalDistance(distance, resolution int) (int, int) {
+	newCol := distance / resolution
+	newSubCol := distance % resolution
+	// we have gone out of bounds and integer division will give us 0 instead of -1
+	// which would lead to erroneous results
+	if distance < 0 {
+		newCol = -1
+	}
+	return newCol, newSubCol
+}

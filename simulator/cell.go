@@ -2,7 +2,6 @@ package simulator
 
 import (
 	"container/list"
-	"fmt"
 )
 
 type Cell struct {
@@ -150,12 +149,12 @@ func mapCellIDToPosition() [cellIDCount]CellPosition {
 	}
 }
 
-func GetCellID(row, col int) (CellID, error) {
+func GetCellID(row, col int) CellID {
 	for id, pos := range mapCellIDToPosition() {
 		if pos.Row == row && pos.Col == col {
-			return CellID(id), nil
+			return CellID(id)
 		}
 	}
 
-	return CellOutOfBounds, fmt.Errorf("Invalid row [%d] or col [%d] provided", row, col)
+	return CellOutOfBounds
 }

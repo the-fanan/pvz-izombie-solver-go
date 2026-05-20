@@ -14,17 +14,25 @@ type Frame interface {
 	CellHasPlant(cellID CellID) bool
 }
 
-func NewFrame(cellResolution, rowToSimulateOn, sun int) (Frame, error) {
+func NewFrame(rows, cols, cellResolution, rowToSimulateOn, sun int) Frame {
+	// ensure rows is at most 5
 	NUM_ROWS := 5
+	if rows < NUM_ROWS {
+		NUM_ROWS = rows
+	}
+	// ensure columns is at most 7
 	NUM_COLS := 7
+	if cols < NUM_COLS {
+		NUM_COLS = cols
+	}
 	board := [][]Cell{}
 
 	for row := 0; row < NUM_ROWS; row++ {
 		board = append(board, []Cell{})
 		for col := 0; col < NUM_COLS; col++ {
-			cellID, err := GetCellID(row, col)
-			if err != nil {
-				return nil, err
+			cellID := GetCellID(row, col)
+			if cellID == CellOutOfBounds {
+				continue
 			}
 			board[row] = append(board[row], Cell{
 				CellID:            cellID,
@@ -39,7 +47,7 @@ func NewFrame(cellResolution, rowToSimulateOn, sun int) (Frame, error) {
 		RowToSimulateOn: rowToSimulateOn,
 		Board: board,
 		Sun: sun,
-	}, nil
+	}
 }
 
 type frame struct {
