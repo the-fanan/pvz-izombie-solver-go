@@ -75,15 +75,15 @@ func mapZombieToWalkingSpeed() [zombieCount]int{
 type GetNextPositionFunc func(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int)
 
 func defaultNextPositionFunc(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int) {
-	currentCell, currentSubmatrixRow, currentSubMatrixCol, currentAltitude := zombie.getStartingPosition()
-	startingPoint := GetHorizontalDistanceFromCellColAndSubCellCol(currentCell.Position().Col, currentSubMatrixCol, zombie.resolution)
+	startingCell, startingSubmatrixRow, startingSubMatrixCol, startingAltitude := zombie.getStartingPosition()
+	startingPoint := GetHorizontalDistanceFromCellColAndSubCellCol(startingCell.Position().Col, startingSubMatrixCol, zombie.resolution)
 
 	// we use minus because we are going from right to left
 	endPoint := startingPoint - int(speed * float64(zombie.movementFrame))
 	newCol, newSubmatrixCol := GetCellColAndSubCellColFromHorizontalDistance(endPoint, zombie.resolution)
-	newCellID := GetCellID(currentCell.Position().Row, newCol)
+	newCellID := GetCellID(startingCell.Position().Row, newCol)
 
-	return newCellID, currentSubmatrixRow, newSubmatrixCol, currentAltitude
+	return newCellID, startingSubmatrixRow, newSubmatrixCol, startingAltitude
 }
 
 func mapZombieToGetNextPositionFunc() [zombieCount]GetNextPositionFunc {
