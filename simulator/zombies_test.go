@@ -7,13 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type position struct {
+	cellID CellID
+	subMatrixRow int
+	subMatrixCol int
+	subMatrixAltitude int
+}
+
 func TestDefaultZombieMovement(t *testing.T) {
-	type position struct {
-		cellID CellID
-		subMatrixRow int
-		subMatrixCol int
-		subMatrixAltitude int
-	}
 	tests := []struct {
 		resolution int
 		rows int
