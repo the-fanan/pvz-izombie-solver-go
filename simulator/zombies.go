@@ -38,6 +38,7 @@ const (
 	ZombieImp
 	ZombieConeHead
 	ZombieBucketHead
+	ZombiePoleVault
 
 	zombieCount
 )
@@ -60,6 +61,7 @@ func mapZombieToSunCost() [zombieCount]int{
 		ZombieImp: 50,
 		ZombieConeHead: 75,
 		ZombieBucketHead: 125,
+		ZombiePoleVault: 0,
 	}
 }
 
@@ -69,6 +71,7 @@ func mapZombieToWalkingSpeed() [zombieCount]int{
 		ZombieImp: 3,
 		ZombieConeHead: 3,
 		ZombieBucketHead: 3,
+		ZombiePoleVault: 0,
 	}
 }
 
@@ -86,6 +89,11 @@ func defaultNextPositionFunc(frame Frame, zombie *zombie, speed float64) (CellID
 	return newCellID, startingSubmatrixRow, newSubmatrixCol, startingAltitude
 }
 
+func poleVaultNextPositionFunc(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int) {
+	// to do: implement pole vault zombie movement
+	return CellOutOfBounds, -1, -1, -1
+}
+
 func mapZombieToGetNextPositionFunc() [zombieCount]GetNextPositionFunc {
 	return [...]GetNextPositionFunc{
 		ZombieUnknown: func(frame Frame, zombie *zombie, speed float64) (CellID, int, int, int){
@@ -94,6 +102,7 @@ func mapZombieToGetNextPositionFunc() [zombieCount]GetNextPositionFunc {
 		ZombieImp: defaultNextPositionFunc,
 		ZombieConeHead: defaultNextPositionFunc,
 		ZombieBucketHead: defaultNextPositionFunc,
+		ZombiePoleVault: poleVaultNextPositionFunc,
 	}
 }
 
