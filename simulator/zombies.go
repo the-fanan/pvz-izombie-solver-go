@@ -144,6 +144,7 @@ func (z *zombie) Copy() Zombie {
 		startingSubMatrixCol:  z.startingSubMatrixCol,
 		startingSubMatrixAltitude: z.startingSubMatrixAltitude,
 		movementFrame:         z.movementFrame,
+		isFrozen: z.isFrozen,
 	}
 }
 
@@ -171,7 +172,6 @@ func (z *zombie) Move(frame Frame) {
 	z.subMatrixRow = sr
 	z.subMatrixCol = sc
 	z.subMatrixAltitude = sa
-
 }
 
 func (z *zombie) getStartingPosition() (CellID, int, int, int) {
